@@ -9,13 +9,18 @@ using namespace std;
 
 struct Adresat
 {
-    int id;
+    int id, userIdent;
     string imie, nazwisko, telefon, mail, adres;
 };
-
-void DodajNowyKontakt(int iloscKontaktow, vector <Adresat> &nowy, int id)
+struct User
 {
+    int identyficationNr;
+    string login, password;
+};
 
+void DodajNowyKontakt(vector <Adresat> &nowy, int id, int userIdd)
+{
+    fstream book;
     int idIterator;
     Adresat person;
     string imie, nazwisko, telefon, mail, adres;
@@ -42,6 +47,7 @@ void DodajNowyKontakt(int iloscKontaktow, vector <Adresat> &nowy, int id)
     }
 
     person.id = idIterator+1;
+    person.userIdent = userIdd;
     person.imie = imie;
     person.nazwisko = nazwisko;
     person.telefon = telefon;
@@ -51,18 +57,20 @@ void DodajNowyKontakt(int iloscKontaktow, vector <Adresat> &nowy, int id)
     nowy.push_back(person);
 
     book.open("AdressBook.txt",ios::out | ios::app);
-    book<<nowy[iloscKontaktow].id<<"|";
-    book<<nowy[iloscKontaktow].imie<<"|";
-    book<<nowy[iloscKontaktow].nazwisko<<"|";
-    book<<nowy[iloscKontaktow].telefon<<"|";
-    book<<nowy[iloscKontaktow].mail<<"|";
-    book<<nowy[iloscKontaktow].adres<<"|"<<endl;
+    book<<nowy[nowy.size()-1].id<<"|";
+    book<<nowy[nowy.size()-1].userIdent<<"|";
+    book<<nowy[nowy.size()-1].imie<<"|";
+    book<<nowy[nowy.size()-1].nazwisko<<"|";
+    book<<nowy[nowy.size()-1].telefon<<"|";
+    book<<nowy[nowy.size()-1].mail<<"|";
+    book<<nowy[nowy.size()-1].adres<<"|"<<endl;
     book.close();
+
     cout<<"Nowy kontakt dodano pomyslnie.";
     Sleep(1500);
 }
 
-void SzukajImion (vector <Adresat> &lista)
+void SzukajImion (vector <Adresat> &lista, int userID)
 {
     string imie;
     int countShow=0;
@@ -71,7 +79,7 @@ void SzukajImion (vector <Adresat> &lista)
 
     for(int i=0; i<lista.size(); i++)
     {
-        if (lista[i].imie == imie)
+        if (lista[i].imie == imie && lista[i].userIdent==userID)
         {
             countShow++;
             cout<<lista[i].id<<". ";
@@ -86,7 +94,7 @@ void SzukajImion (vector <Adresat> &lista)
     cout<<"Wcisnij klawisz by wrocic do menu glownego.";
     getch();
 }
-void SzukajNazwisk (vector <Adresat> &lista)
+void SzukajNazwisk (vector <Adresat> &lista, int userID)
 {
     string nazwisko;
     int countShow=0;
@@ -95,7 +103,7 @@ void SzukajNazwisk (vector <Adresat> &lista)
 
     for(int i=0; i<lista.size(); i++)
     {
-        if (lista[i].nazwisko == nazwisko)
+        if (lista[i].nazwisko == nazwisko && lista[i].userIdent==userID)
         {
             countShow++;
             cout<<lista[i].id<<". ";
@@ -110,15 +118,18 @@ void SzukajNazwisk (vector <Adresat> &lista)
     cout<<"Wcisnij klawisz by wrocic do menu glownego.";
     getch();
 }
-void WyswietlWszystkie (vector <Adresat> &lista)
+void WyswietlWszystkie (vector <Adresat> &lista, int userIddd)
 {
     int countShow=0;
     for(int i=0; i<lista.size(); i++)
     {
-        countShow++;
-        cout<<lista[i].id<<". ";
-        cout<<lista[i].imie<<" "<<lista[i].nazwisko<<endl;
-        cout<<"Tel. "<<lista[i].telefon<<endl<<"Adres e-mail: "<<lista[i].mail<<endl<<"Adres zamieszkania: "<<lista[i].adres<<endl<<endl;
+        if(lista[i].userIdent==userIddd)
+        {
+            countShow++;
+            cout<<lista[i].id<<". ";
+            cout<<lista[i].imie<<" "<<lista[i].nazwisko<<endl;
+            cout<<"Tel. "<<lista[i].telefon<<endl<<"Adres e-mail: "<<lista[i].mail<<endl<<"Adres zamieszkania: "<<lista[i].adres<<endl<<endl;
+        }
     }
     if (countShow == 0)
     {
@@ -128,47 +139,90 @@ void WyswietlWszystkie (vector <Adresat> &lista)
     getch();
 }
 
-void usuwanieAdresata (vector <Adresat> &nowy, fstream &boook)
+void usuwanieAdresata (vector <Adresat> &nowy, int userID)
 {
+    fstream boook, temporaryBook;
+    string name;
+    string liniaWczytujacaPliku;
+    Adresat person;
     int identification=0;
     int countShow=0;
     char answer;
     cout<<"Podaj ID adresata:";
     cin>>identification;
-
-    for (int i=0; i<nowy.size(); i++)
+    for(int i=0; i<nowy.size(); i++)
     {
-        if(nowy[i].id==identification)
+        if(nowy[i].id==identification && nowy[i].userIdent==userID)
         {
             countShow++;
             cout<<nowy[i].id<<". ";
             cout<<nowy[i].imie<<" "<<nowy[i].nazwisko<<endl;
-            cout<<"Tel. "<<nowy[i].telefon<<endl<<"Adres e-mail: "<<nowy[i].mail<<endl<<"Adres zamieszkania: "<<nowy[i].adres<<endl;
+            cout<<"Tel. "<<nowy[i].telefon<<endl<<"Adres e-mail: "<<nowy[i].mail<<endl<<"Adres zamieszkania: "<<nowy[i].adres<<endl<<endl;
             cout<<"Czy na pewno chcesz go usunac? Wcisnij -t- na tak, lub -n- na nie."<<endl;
-            answer=getch();
-            if(answer=='t')
-            {
-                nowy.erase(nowy.begin()+i);
+        }
+    }
+    answer=getch();
+    if(answer=='t')
+    {
+        boook.open("AdressBook.txt",ios::in);
+        temporaryBook.open("TemporaryAdressBook.txt",ios::out | ios::app);
 
-                remove("AdressBook.txt");
-                boook.open("AdressBook.txt",ios::out | ios::app);
-                for (int j=0; j<nowy.size(); j++)
+        while(!boook.eof())
+        {
+            getline(boook,liniaWczytujacaPliku);
+            if(!boook.eof())
+            {
+                string nrID, nrUserID, item;
+                stringstream ss (liniaWczytujacaPliku);
+                vector <string> subsidiaryVector(0);
+                while (getline(ss, item, '|'))
                 {
-                    boook<<nowy[j].id<<"|";
-                    boook<<nowy[j].imie<<"|";
-                    boook<<nowy[j].nazwisko<<"|";
-                    boook<<nowy[j].telefon<<"|";
-                    boook<<nowy[j].mail<<"|";
-                    boook<<nowy[j].adres<<"|"<<endl;
+                    subsidiaryVector.push_back(item);
                 }
-                boook.close();
+                vector <string>::iterator itr = subsidiaryVector.begin();
+                nrID = *itr;
+                person.id = atoi(nrID.c_str());
+                itr++;
+                nrUserID = *itr;
+                person.userIdent = atoi(nrUserID.c_str());
+                itr++;
+                person.imie = *itr;
+                itr++;
+                person.nazwisko = *itr;
+                itr++;
+                person.telefon = *itr;
+                itr++;
+                person.mail = *itr;
+                itr++;
+                person.adres = *itr;
+
+                if (person.id==identification && person.userIdent==userID)
+                {
+
+                }
+                else
+                {
+                    temporaryBook<<person.id<<"|";
+                    temporaryBook<<person.userIdent<<"|";
+                    temporaryBook<<person.imie<<"|";
+                    temporaryBook<<person.nazwisko<<"|";
+                    temporaryBook<<person.telefon<<"|";
+                    temporaryBook<<person.mail<<"|";
+                    temporaryBook<<person.adres<<"|"<<endl;
+                }
+                subsidiaryVector.clear();
             }
             else
             {
+                boook.close();
+                remove("AdressBook.txt");
+                temporaryBook.close();
+                rename("TemporaryAdressBook.txt", "AdressBook.txt");
                 break;
             }
         }
     }
+
     if (countShow == 0)
     {
         cout<<"Cos ci sie pomylilo. Nie ma takiego adresata w twojej ksiazce."<<endl;
@@ -177,191 +231,480 @@ void usuwanieAdresata (vector <Adresat> &nowy, fstream &boook)
     getch();
 }
 
-void changingName(vector <Adresat> &nowy, int personalID, fstream &boook)
+void changingName(int personalID, int userID)
 {
-    int countShow=0;
+    fstream boook, temporaryBook;
     string name;
-    for (int i=0; i<nowy.size(); i++)
-    {
-        if(nowy[i].id==personalID)
-        {
-            countShow++;
-            cout<<"Na jakie zmieniamy?"<<endl;
-            cin>>name;
-            nowy[i].imie=name;
-            remove("AdressBook.txt");
-            boook.open("AdressBook.txt",ios::out | ios::app);
-            for (int j=0; j<nowy.size(); j++)
-            {
-                boook<<nowy[j].id<<"|";
-                boook<<nowy[j].imie<<"|";
-                boook<<nowy[j].nazwisko<<"|";
-                boook<<nowy[j].telefon<<"|";
-                boook<<nowy[j].mail<<"|";
-                boook<<nowy[j].adres<<"|"<<endl;
-            }
-            boook.close();
+    string liniaWczytujacaPliku;
+    Adresat person;
 
+    cout<<"Na jakie zmieniamy?"<<endl;
+    cin>>name;
+
+    boook.open("AdressBook.txt",ios::in);
+    temporaryBook.open("TemporaryAdressBook.txt",ios::out | ios::app);
+
+    while(!boook.eof())
+    {
+        getline(boook,liniaWczytujacaPliku);
+        if(!boook.eof())
+        {
+            string nrID, nrUserID, item;
+            stringstream ss (liniaWczytujacaPliku);
+            vector <string> subsidiaryVector(0);
+            while (getline(ss, item, '|'))
+            {
+                subsidiaryVector.push_back(item);
+            }
+            vector <string>::iterator itr = subsidiaryVector.begin();
+            nrID = *itr;
+            person.id = atoi(nrID.c_str());
+            itr++;
+            nrUserID = *itr;
+            person.userIdent = atoi(nrUserID.c_str());
+            itr++;
+            person.imie = *itr;
+            itr++;
+            person.nazwisko = *itr;
+            itr++;
+            person.telefon = *itr;
+            itr++;
+            person.mail = *itr;
+            itr++;
+            person.adres = *itr;
+
+            if (person.id==personalID && person.userIdent==userID)
+            {
+                temporaryBook<<person.id<<"|";
+                temporaryBook<<person.userIdent<<"|";
+                temporaryBook<<name<<"|";
+                temporaryBook<<person.nazwisko<<"|";
+                temporaryBook<<person.telefon<<"|";
+                temporaryBook<<person.mail<<"|";
+                temporaryBook<<person.adres<<"|"<<endl;
+            }
+            else
+            {
+                temporaryBook<<person.id<<"|";
+                temporaryBook<<person.userIdent<<"|";
+                temporaryBook<<person.imie<<"|";
+                temporaryBook<<person.nazwisko<<"|";
+                temporaryBook<<person.telefon<<"|";
+                temporaryBook<<person.mail<<"|";
+                temporaryBook<<person.adres<<"|"<<endl;
+            }
+            subsidiaryVector.clear();
+        }
+        else
+        {
+            boook.close();
+            remove("AdressBook.txt");
+            temporaryBook.close();
+            rename("TemporaryAdressBook.txt", "AdressBook.txt");
+            break;
         }
     }
-    if (countShow == 0)
-    {
-        cout<<"Ups. Cos poszlo nie tak. Czy jestes pewien, ze wprowadziles poprawne ID?"<<endl;
-    }
-    cout<<"Wcisnij klawisz by wrocic do menu glownego.";
-    getch();
 }
-void changingSurname(vector <Adresat> &nowy, int personalID, fstream &boook)
+void changingSurname(int personalID, int userID)
 {
-    int countShow=0;
+    fstream boook, temporaryBook;
     string surname;
-    for (int i=0; i<nowy.size(); i++)
-    {
-        if(nowy[i].id==personalID)
-        {
-            countShow++;
-            cout<<"Na jakie zmieniamy?"<<endl;
-            cin>>surname;
-            nowy[i].nazwisko=surname;
-            remove("AdressBook.txt");
-            boook.open("AdressBook.txt",ios::out | ios::app);
-            for (int j=0; j<nowy.size(); j++)
-            {
-                boook<<nowy[j].id<<"|";
-                boook<<nowy[j].imie<<"|";
-                boook<<nowy[j].nazwisko<<"|";
-                boook<<nowy[j].telefon<<"|";
-                boook<<nowy[j].mail<<"|";
-                boook<<nowy[j].adres<<"|"<<endl;
-            }
-            boook.close();
+    string liniaWczytujacaPliku;
+    Adresat person;
 
+    cout<<"Na jakie zmieniamy?"<<endl;
+    cin>>surname;
+
+    boook.open("AdressBook.txt",ios::in);
+    temporaryBook.open("TemporaryAdressBook.txt",ios::out | ios::app);
+
+    while(!boook.eof())
+    {
+        getline(boook,liniaWczytujacaPliku);
+        if(!boook.eof())
+        {
+            string nrID, nrUserID, item;
+            stringstream ss (liniaWczytujacaPliku);
+            vector <string> subsidiaryVector(0);
+            while (getline(ss, item, '|'))
+            {
+                subsidiaryVector.push_back(item);
+            }
+            vector <string>::iterator itr = subsidiaryVector.begin();
+            nrID = *itr;
+            person.id = atoi(nrID.c_str());
+            itr++;
+            nrUserID = *itr;
+            person.userIdent = atoi(nrUserID.c_str());
+            itr++;
+            person.imie = *itr;
+            itr++;
+            person.nazwisko = *itr;
+            itr++;
+            person.telefon = *itr;
+            itr++;
+            person.mail = *itr;
+            itr++;
+            person.adres = *itr;
+
+            if (person.id==personalID && person.userIdent==userID)
+            {
+                temporaryBook<<person.id<<"|";
+                temporaryBook<<person.userIdent<<"|";
+                temporaryBook<<person.imie<<"|";
+                temporaryBook<<surname<<"|";
+                temporaryBook<<person.telefon<<"|";
+                temporaryBook<<person.mail<<"|";
+                temporaryBook<<person.adres<<"|"<<endl;
+            }
+            else
+            {
+                temporaryBook<<person.id<<"|";
+                temporaryBook<<person.userIdent<<"|";
+                temporaryBook<<person.imie<<"|";
+                temporaryBook<<person.nazwisko<<"|";
+                temporaryBook<<person.telefon<<"|";
+                temporaryBook<<person.mail<<"|";
+                temporaryBook<<person.adres<<"|"<<endl;
+            }
+            subsidiaryVector.clear();
+        }
+        else
+        {
+            boook.close();
+            remove("AdressBook.txt");
+            temporaryBook.close();
+            rename("TemporaryAdressBook.txt", "AdressBook.txt");
+            break;
         }
     }
-    if (countShow == 0)
-    {
-        cout<<"Ups. Cos poszlo nie tak. Czy jestes pewien, ze wprowadziles poprawne ID?"<<endl;
-    }
-    cout<<"Wcisnij klawisz by wrocic do menu glownego.";
-    getch();
 }
 
-void changingNumber(vector <Adresat> &nowy, int personalID, fstream &boook)
+void changingNumber(int personalID, int userID)
 {
-    int countShow=0;
+    fstream boook, temporaryBook;
     string number;
-    for (int i=0; i<nowy.size(); i++)
-    {
-        if(nowy[i].id==personalID)
-        {
-            countShow++;
-            cout<<"Na jaki zmieniamy?"<<endl;
-            cin.sync();
-            getline(cin, number);
-            nowy[i].telefon=number;
-            remove("AdressBook.txt");
-            boook.open("AdressBook.txt",ios::out | ios::app);
-            for (int j=0; j<nowy.size(); j++)
-            {
-                boook<<nowy[j].id<<"|";
-                boook<<nowy[j].imie<<"|";
-                boook<<nowy[j].nazwisko<<"|";
-                boook<<nowy[j].telefon<<"|";
-                boook<<nowy[j].mail<<"|";
-                boook<<nowy[j].adres<<"|"<<endl;
-            }
-            boook.close();
+    string liniaWczytujacaPliku;
+    Adresat person;
 
+    cout<<"Na jaki zmieniamy?"<<endl;
+    cin.sync();
+    getline(cin, number);
+
+    boook.open("AdressBook.txt",ios::in);
+    temporaryBook.open("TemporaryAdressBook.txt",ios::out | ios::app);
+
+    while(!boook.eof())
+    {
+        getline(boook,liniaWczytujacaPliku);
+        if(!boook.eof())
+        {
+            string nrID, nrUserID, item;
+            stringstream ss (liniaWczytujacaPliku);
+            vector <string> subsidiaryVector(0);
+            while (getline(ss, item, '|'))
+            {
+                subsidiaryVector.push_back(item);
+            }
+            vector <string>::iterator itr = subsidiaryVector.begin();
+            nrID = *itr;
+            person.id = atoi(nrID.c_str());
+            itr++;
+            nrUserID = *itr;
+            person.userIdent = atoi(nrUserID.c_str());
+            itr++;
+            person.imie = *itr;
+            itr++;
+            person.nazwisko = *itr;
+            itr++;
+            person.telefon = *itr;
+            itr++;
+            person.mail = *itr;
+            itr++;
+            person.adres = *itr;
+
+            if (person.id==personalID && person.userIdent==userID)
+            {
+                temporaryBook<<person.id<<"|";
+                temporaryBook<<person.userIdent<<"|";
+                temporaryBook<<person.imie<<"|";
+                temporaryBook<<person.nazwisko<<"|";
+                temporaryBook<<number<<"|";
+                temporaryBook<<person.mail<<"|";
+                temporaryBook<<person.adres<<"|"<<endl;
+            }
+            else
+            {
+                temporaryBook<<person.id<<"|";
+                temporaryBook<<person.userIdent<<"|";
+                temporaryBook<<person.imie<<"|";
+                temporaryBook<<person.nazwisko<<"|";
+                temporaryBook<<person.telefon<<"|";
+                temporaryBook<<person.mail<<"|";
+                temporaryBook<<person.adres<<"|"<<endl;
+            }
+            subsidiaryVector.clear();
+        }
+        else
+        {
+            boook.close();
+            remove("AdressBook.txt");
+            temporaryBook.close();
+            rename("TemporaryAdressBook.txt", "AdressBook.txt");
+            break;
         }
     }
-    if (countShow == 0)
-    {
-        cout<<"Ups. Cos poszlo nie tak. Czy jestes pewien, ze wprowadziles poprawne ID?"<<endl;
-    }
-    cout<<"Wcisnij klawisz by wrocic do menu glownego.";
-    getch();
 }
-void changingEmail(vector <Adresat> &nowy, int personalID, fstream &boook)
+void changingEmail(int personalID, int userID)
 {
-    int countShow=0;
+    fstream boook, temporaryBook;
     string email;
-    for (int i=0; i<nowy.size(); i++)
-    {
-        if(nowy[i].id==personalID)
-        {
-            countShow++;
-            cout<<"Na jaki zmieniamy?"<<endl;
-            cin>>email;
-            nowy[i].mail=email;
-            remove("AdressBook.txt");
-            boook.open("AdressBook.txt",ios::out | ios::app);
-            for (int j=0; j<nowy.size(); j++)
-            {
-                boook<<nowy[j].id<<"|";
-                boook<<nowy[j].imie<<"|";
-                boook<<nowy[j].nazwisko<<"|";
-                boook<<nowy[j].telefon<<"|";
-                boook<<nowy[j].mail<<"|";
-                boook<<nowy[j].adres<<"|"<<endl;
-            }
-            boook.close();
+    string liniaWczytujacaPliku;
+    Adresat person;
 
+    cout<<"Na jakie zmieniamy?"<<endl;
+    cin>>email;
+
+    boook.open("AdressBook.txt",ios::in);
+    temporaryBook.open("TemporaryAdressBook.txt",ios::out | ios::app);
+
+    while(!boook.eof())
+    {
+        getline(boook,liniaWczytujacaPliku);
+        if(!boook.eof())
+        {
+            string nrID, nrUserID, item;
+            stringstream ss (liniaWczytujacaPliku);
+            vector <string> subsidiaryVector(0);
+            while (getline(ss, item, '|'))
+            {
+                subsidiaryVector.push_back(item);
+            }
+            vector <string>::iterator itr = subsidiaryVector.begin();
+            nrID = *itr;
+            person.id = atoi(nrID.c_str());
+            itr++;
+            nrUserID = *itr;
+            person.userIdent = atoi(nrUserID.c_str());
+            itr++;
+            person.imie = *itr;
+            itr++;
+            person.nazwisko = *itr;
+            itr++;
+            person.telefon = *itr;
+            itr++;
+            person.mail = *itr;
+            itr++;
+            person.adres = *itr;
+
+            if (person.id==personalID && person.userIdent==userID)
+            {
+                temporaryBook<<person.id<<"|";
+                temporaryBook<<person.userIdent<<"|";
+                temporaryBook<<person.imie<<"|";
+                temporaryBook<<person.nazwisko<<"|";
+                temporaryBook<<person.telefon<<"|";
+                temporaryBook<<email<<"|";
+                temporaryBook<<person.adres<<"|"<<endl;
+            }
+            else
+            {
+                temporaryBook<<person.id<<"|";
+                temporaryBook<<person.userIdent<<"|";
+                temporaryBook<<person.imie<<"|";
+                temporaryBook<<person.nazwisko<<"|";
+                temporaryBook<<person.telefon<<"|";
+                temporaryBook<<person.mail<<"|";
+                temporaryBook<<person.adres<<"|"<<endl;
+            }
+            subsidiaryVector.clear();
+        }
+        else
+        {
+            boook.close();
+            remove("AdressBook.txt");
+            temporaryBook.close();
+            rename("TemporaryAdressBook.txt", "AdressBook.txt");
+            break;
         }
     }
-    if (countShow == 0)
-    {
-        cout<<"Ups. Cos poszlo nie tak. Czy jestes pewien, ze wprowadziles poprawne ID?"<<endl;
-    }
-    cout<<"Wcisnij klawisz by wrocic do menu glownego.";
-    getch();
 }
-void changingAdress(vector <Adresat> &nowy, int personalID, fstream &boook)
+void changingAdress(int personalID, int userID)
 {
-    int countShow=0;
-    string address;
-    for (int i=0; i<nowy.size(); i++)
-    {
-        if(nowy[i].id==personalID)
-        {
-            countShow++;
-            cout<<"Na jaki zmieniamy?"<<endl;
-            cin.sync();
-            getline(cin, address);
-            nowy[i].adres=address;
-            remove("AdressBook.txt");
-            boook.open("AdressBook.txt",ios::out | ios::app);
-            for (int j=0; j<nowy.size(); j++)
-            {
-                boook<<nowy[j].id<<"|";
-                boook<<nowy[j].imie<<"|";
-                boook<<nowy[j].nazwisko<<"|";
-                boook<<nowy[j].telefon<<"|";
-                boook<<nowy[j].mail<<"|";
-                boook<<nowy[j].adres<<"|"<<endl;
-            }
-            boook.close();
+    fstream boook, temporaryBook;
+    string adress;
+    string liniaWczytujacaPliku;
+    Adresat person;
 
+    cout<<"Na jakie zmieniamy?"<<endl;
+    cin.sync();
+    getline(cin, adress);
+
+    boook.open("AdressBook.txt",ios::in);
+    temporaryBook.open("TemporaryAdressBook.txt",ios::out | ios::app);
+
+    while(!boook.eof())
+    {
+        getline(boook,liniaWczytujacaPliku);
+        if(!boook.eof())
+        {
+            string nrID, nrUserID, item;
+            stringstream ss (liniaWczytujacaPliku);
+            vector <string> subsidiaryVector(0);
+            while (getline(ss, item, '|'))
+            {
+                subsidiaryVector.push_back(item);
+            }
+            vector <string>::iterator itr = subsidiaryVector.begin();
+            nrID = *itr;
+            person.id = atoi(nrID.c_str());
+            itr++;
+            nrUserID = *itr;
+            person.userIdent = atoi(nrUserID.c_str());
+            itr++;
+            person.imie = *itr;
+            itr++;
+            person.nazwisko = *itr;
+            itr++;
+            person.telefon = *itr;
+            itr++;
+            person.mail = *itr;
+            itr++;
+            person.adres = *itr;
+
+            if (person.id==personalID && person.userIdent==userID)
+            {
+                temporaryBook<<person.id<<"|";
+                temporaryBook<<person.userIdent<<"|";
+                temporaryBook<<person.imie<<"|";
+                temporaryBook<<person.nazwisko<<"|";
+                temporaryBook<<person.telefon<<"|";
+                temporaryBook<<person.mail<<"|";
+                temporaryBook<<adress<<"|"<<endl;
+            }
+            else
+            {
+                temporaryBook<<person.id<<"|";
+                temporaryBook<<person.userIdent<<"|";
+                temporaryBook<<person.imie<<"|";
+                temporaryBook<<person.nazwisko<<"|";
+                temporaryBook<<person.telefon<<"|";
+                temporaryBook<<person.mail<<"|";
+                temporaryBook<<person.adres<<"|"<<endl;
+            }
+            subsidiaryVector.clear();
+        }
+        else
+        {
+            boook.close();
+            remove("AdressBook.txt");
+            temporaryBook.close();
+            rename("TemporaryAdressBook.txt", "AdressBook.txt");
+            break;
         }
     }
-    if (countShow == 0)
-    {
-        cout<<"Ups. Cos poszlo nie tak. Czy jestes pewien, ze wprowadziles poprawne ID?"<<endl;
-    }
-    cout<<"Wcisnij klawisz by wrocic do menu glownego.";
-    getch();
 }
 
-int main()
+int registration (int idUsers, vector <User> &users)
 {
-    vector <Adresat> adresaci(0);
-    int idPrzyjaciela = 0;
-    int iloscOsobWksiazceAdresowejPrzyjaciol = 0;
-    char wyborMenuGlownego;
-    char wyborMenuSzukaj;
-    int editingID;
+    fstream data;
+    string login, haslo;
+    User newPerson;
+    cout<<"Wprowadz swoj nowy login:"<<endl;
+    cin>>login;
+    cout<<"Wprowadz swoje nowe haslo:"<<endl;
+    cin>>haslo;
+
+    newPerson.identyficationNr=idUsers+1;
+    newPerson.login=login;
+    newPerson.password=haslo;
+
+    users.push_back(newPerson);
+
+
+    data.open("Users.txt",ios::out | ios::app);
+    data<<users[idUsers].identyficationNr<<"|";
+    data<<users[idUsers].login<<"|";
+    data<<users[idUsers].password<<endl;
+    data.close();
+    cout<<"Nowego uzytkownika dodano pomyslnie.";
+    idUsers++;
+    Sleep(1500);
+    return idUsers;
+}
+
+int logging(vector <User> &users)
+{
+    int idUsers = 0;
+    string login, haslo;
+    cout<<"Wprowadz swoj login:"<<endl;
+    cin>>login;
+    cout<<"Wprowadz swoje nowe haslo:"<<endl;
+    cin>>haslo;
+    for(int i=0; i<users.size(); i++)
+    {
+        if (users[i].login==login && users[i].password==haslo)
+        {
+            idUsers=users[i].identyficationNr;
+            cout<<"Zalogowales sie poprawnie."<<endl;
+            Sleep(1500);
+            return idUsers;
+        }
+    }
+    cout<<"Bledny login lub haslo."<<endl<<"Sprobuj ponownie"<<endl;
+    Sleep(1500);
+    return idUsers=0;
+}
+
+void loadingUsers (vector <User> &users)
+{
+    string liniaWczytujacaPliku;
+    fstream file;
     string item;
+    User person;
+
+    file.open("Users.txt",ios::in);
+    if(file.good() == false)
+    {
+        file.open("Users.txt",ios::out | ios::app);
+    }
+    while(!file.eof())
+    {
+        getline(file,liniaWczytujacaPliku);
+        if(!file.eof())
+        {
+            string nrID;
+            stringstream ss (liniaWczytujacaPliku);
+            vector <string> subsidiaryVector(0);
+            while (getline(ss, item, '|'))
+            {
+                subsidiaryVector.push_back(item);
+                cout<<item;
+            }
+            vector <string>::iterator itr = subsidiaryVector.begin();
+            nrID = *itr;
+            person.identyficationNr = atoi(nrID.c_str());
+            itr++;
+            person.login = *itr;
+            itr++;
+            person.password = *itr;
+            users.push_back(person);
+            subsidiaryVector.clear();
+        }
+        else
+        {
+            file.close();
+            break;
+        }
+    }
+    file.close();
+}
+
+void loadingAdressBook (vector <Adresat> &adresaci, int userID)
+{
     string liniaWczytujacaPliku;
     fstream book;
+    string item;
     Adresat person;
 
     book.open("AdressBook.txt",ios::in);
@@ -374,7 +717,7 @@ int main()
         getline(book,liniaWczytujacaPliku);
         if(!book.eof())
         {
-            string nrID;
+            string nrID, nrUserID;
             stringstream ss (liniaWczytujacaPliku);
             vector <string> subsidiaryVector(0);
             while (getline(ss, item, '|'))
@@ -386,6 +729,9 @@ int main()
             nrID = *itr;
             person.id = atoi(nrID.c_str());
             itr++;
+            nrUserID = *itr;
+            person.userIdent = atoi(nrUserID.c_str());
+            itr++;
             person.imie = *itr;
             itr++;
             person.nazwisko = *itr;
@@ -395,9 +741,10 @@ int main()
             person.mail = *itr;
             itr++;
             person.adres = *itr;
-
-            adresaci.push_back(person);
-            iloscOsobWksiazceAdresowejPrzyjaciol++;
+            if(person.userIdent==userID)
+            {
+                adresaci.push_back(person);
+            }
             subsidiaryVector.clear();
         }
         else
@@ -407,100 +754,144 @@ int main()
         }
     }
     book.close();
+}
+
+int main()
+{
+    vector <Adresat> adresaci(0);
+    vector <User> users(0);
+    int idPrzyjaciela = 0;
+    int userId = 0;
+    char wyborMenuGlownego, firstMenuChoose;
+    char wyborMenuSzukaj;
+    int editingID;
+    int numberOfcounts = 0;
+
+    loadingUsers(users);
     while(1)
     {
         system("cls");
-        cout<<"1. Dodaj adresata."<<endl;
-        cout<<"2. Wyszukaj po imieniu."<<endl;
-        cout<<"3. Wyszukaj po nazwisku."<<endl;
-        cout<<"4. Wyswietl wsyzstkich adresatow."<<endl;
-        cout<<"5. Usun adresata."<<endl;
-        cout<<"6. Edytuj adresata."<<endl;
+        cout<<"1. Logowanie."<<endl;
+        cout<<"2. Rejestracja."<<endl;
         cout<<"9. Zakoncz program."<<endl;
-        cin>>wyborMenuGlownego;
-
-        if (wyborMenuGlownego =='1')
+        cin>>firstMenuChoose;
+        if (firstMenuChoose =='1')
         {
-            DodajNowyKontakt(iloscOsobWksiazceAdresowejPrzyjaciol,adresaci,idPrzyjaciela);
-            iloscOsobWksiazceAdresowejPrzyjaciol++;
-        }
-        else if (wyborMenuGlownego == '2')
-        {
-            SzukajImion(adresaci);
-        }
-        else if (wyborMenuGlownego == '3')
-        {
-            SzukajNazwisk(adresaci);
-        }
-        else if (wyborMenuGlownego == '4')
-        {
-            WyswietlWszystkie(adresaci);
-        }
-        else if (wyborMenuGlownego == '5')
-        {
-            system("cls");
-            usuwanieAdresata(adresaci,book);
-            iloscOsobWksiazceAdresowejPrzyjaciol--;
-        }
-        else if (wyborMenuGlownego == '6')
-        {
-            system("cls");
-            cout<<"Wpisz ID."<<endl;
-            cin>>editingID;
-            system("cls");
-            for (int i=0; i<adresaci.size(); i++)
+            userId=logging(users);
+            loadingAdressBook(adresaci, userId);
+            if(userId>0)
             {
-                if(adresaci[i].id==editingID)
+                system("cls");
+                cout<<"1. Dodaj adresata."<<endl;
+                cout<<"2. Wyszukaj po imieniu."<<endl;
+                cout<<"3. Wyszukaj po nazwisku."<<endl;
+                cout<<"4. Wyswietl wsyzstkich adresatow."<<endl;
+                cout<<"5. Usun adresata."<<endl;
+                cout<<"6. Edytuj adresata."<<endl;
+                cout<<"9. Zakoncz program."<<endl;
+                cin>>wyborMenuGlownego;
+
+                if (wyborMenuGlownego =='1')
                 {
-                    cout<<adresaci[i].id<<". ";
-                    cout<<adresaci[i].imie<<" "<<adresaci[i].nazwisko<<endl;
-                    cout<<"Tel. "<<adresaci[i].telefon<<endl<<"Adres e-mail: "<<adresaci[i].mail<<endl<<"Adres zamieszkania: "<<adresaci[i].adres<<endl<<endl;
+                    DodajNowyKontakt(adresaci,idPrzyjaciela, userId);
+                }
+                else if (wyborMenuGlownego == '2')
+                {
+                    SzukajImion(adresaci, userId);
+                }
+                else if (wyborMenuGlownego == '3')
+                {
+                    SzukajNazwisk(adresaci, userId);
+                }
+                else if (wyborMenuGlownego == '4')
+                {
+                    WyswietlWszystkie(adresaci, userId);
+                }
+                else if (wyborMenuGlownego == '5')
+                {
+                    system("cls");
+                    usuwanieAdresata(adresaci, userId);
+                }
+                else if (wyborMenuGlownego == '6')
+                {
+                    system("cls");
+                    cout<<"Wpisz ID."<<endl;
+                    cin>>editingID;
+                    system("cls");
+                    for (int i=0; i<adresaci.size(); i++)
+                    {
+                        if(adresaci[i].id==editingID)
+                        {
+                            numberOfcounts++;
+                            cout<<adresaci[i].id<<". ";
+                            cout<<adresaci[i].imie<<" "<<adresaci[i].nazwisko<<endl;
+                            cout<<"Tel. "<<adresaci[i].telefon<<endl<<"Adres e-mail: "<<adresaci[i].mail<<endl<<"Adres zamieszkania: "<<adresaci[i].adres<<endl<<endl;
+
+                            cout<<"Co zmieniamy?"<<endl;
+                            cout<<"1 - imie"<<endl;
+                            cout<<"2 - nazwisko"<<endl;
+                            cout<<"3 - numer telefonu"<<endl;
+                            cout<<"4 - email"<<endl;
+                            cout<<"5 - adres"<<endl;
+                            cout<<"6 - powrot do menu"<<endl;
+                            cin>>wyborMenuSzukaj;
+                            switch (wyborMenuSzukaj)
+                            {
+                            case '1':
+                            {
+                                changingName(editingID, userId);
+                            }
+                            break;
+                            case '2':
+                            {
+                                changingSurname(editingID, userId);
+                            }
+                            break;
+                            case '3':
+                            {
+                                changingNumber(editingID, userId);
+                            }
+                            break;
+                            case '4':
+                            {
+                                changingEmail(editingID, userId);
+                            }
+                            break;
+                            case '5':
+                            {
+                                changingAdress(editingID, userId);
+                            }
+                            break;
+                            case '6':
+                                break;
+                            }
+                        }
+                    }
+                    if (numberOfcounts==0)
+                    {
+                        cout<<"Ups. Cos poszlo nie tak. Czy jestes pewien, ze wprowadziles poprawne ID?"<<endl;
+                        cout<<"Wcisnij klawisz by wrocic do menu glownego.";
+                        getch();
+                    }
+                    numberOfcounts=0;
+                }
+                else if (wyborMenuGlownego == '9')
+                {
+                    exit(0);
                 }
             }
-            cout<<"Co zmieniamy?"<<endl;
-            cout<<"1 - imie"<<endl;
-            cout<<"2 - nazwisko"<<endl;
-            cout<<"3 - numer telefonu"<<endl;
-            cout<<"4 - email"<<endl;
-            cout<<"5 - adres"<<endl;
-            cout<<"6 - powrot do menu"<<endl;
-            cin>>wyborMenuSzukaj;
-            switch (wyborMenuSzukaj)
-            {
-            case '1':
-            {
-                changingName(adresaci, editingID,book);
-            }
-            break;
-            case '2':
-            {
-                changingSurname(adresaci, editingID,book);
-            }
-            break;
-            case '3':
-            {
-                changingNumber(adresaci, editingID,book);
-            }
-            break;
-            case '4':
-            {
-                changingEmail(adresaci, editingID,book);
-            }
-            break;
-            case '5':
-            {
-                changingAdress(adresaci, editingID,book);
-            }
-            break;
-            case '6':
-                break;
-            }
         }
-        else if (wyborMenuGlownego == '9')
+        else if (firstMenuChoose == '2')
+        {
+            userId = registration(userId, users);
+        }
+        else if (firstMenuChoose == '9')
         {
             exit(0);
         }
+        adresaci.clear();
     }
+
     return 0;
 }
 
