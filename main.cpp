@@ -605,7 +605,7 @@ void changingAdress(int personalID, int userID)
     }
 }
 
-int registration (int idUsers, vector <User> &users)
+void registration (vector <User> &users)
 {
     fstream data;
     string login, haslo;
@@ -615,22 +615,19 @@ int registration (int idUsers, vector <User> &users)
     cout<<"Wprowadz swoje nowe haslo:"<<endl;
     cin>>haslo;
 
-    newPerson.identyficationNr=idUsers+1;
+    newPerson.identyficationNr=users.size()+1;
     newPerson.login=login;
     newPerson.password=haslo;
 
     users.push_back(newPerson);
 
-
     data.open("Users.txt",ios::out | ios::app);
-    data<<users[idUsers].identyficationNr<<"|";
-    data<<users[idUsers].login<<"|";
-    data<<users[idUsers].password<<endl;
+    data<<users[users.size()-1].identyficationNr<<"|";
+    data<<users[users.size()-1].login<<"|";
+    data<<users[users.size()-1].password<<endl;
     data.close();
     cout<<"Nowego uzytkownika dodano pomyslnie.";
-    idUsers++;
     Sleep(1500);
-    return idUsers;
 }
 
 int logging(vector <User> &users)
@@ -883,7 +880,7 @@ int main()
         }
         else if (firstMenuChoose == '2')
         {
-            userId = registration(userId, users);
+            registration(users);
         }
         else if (firstMenuChoose == '9')
         {
