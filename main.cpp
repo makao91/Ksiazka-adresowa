@@ -231,6 +231,78 @@ void usuwanieAdresata (vector <Adresat> &nowy, int userID)
     getch();
 }
 
+void changingPassword(vector <User> &userss, int userId)
+{
+    fstream boook, temporaryBook;
+    string oldPass, newPass;
+    string liniaWczytujacaPliku;
+    User someUser;
+
+    cout<<"Wpisz stare haslo:"<<endl;
+    cin>>oldPass;
+    cout<<"Wpisz stare haslo:"<<endl;
+    cin>>newPass;
+
+
+    if(oldPass==userss[userId-1].password)
+    {
+        boook.open("Users.txt",ios::in);
+        temporaryBook.open("TemporaryUsers.txt",ios::out | ios::app);
+
+        while(!boook.eof())
+        {
+            getline(boook,liniaWczytujacaPliku);
+            if(!boook.eof())
+            {
+                string nrUserID, item;
+                stringstream ss (liniaWczytujacaPliku);
+                vector <string> subsidiaryVector(0);
+                while (getline(ss, item, '|'))
+                {
+                    subsidiaryVector.push_back(item);
+                }
+                vector <string>::iterator itr = subsidiaryVector.begin();
+
+                nrUserID = *itr;
+                someUser.identyficationNr = atoi(nrUserID.c_str());
+                itr++;
+                someUser.login = *itr;
+                itr++;
+                someUser.password = *itr;
+
+                if (someUser.identyficationNr==userId)
+                {
+                    temporaryBook<<someUser.identyficationNr<<"|";
+                    temporaryBook<<someUser.login<<"|";
+                    temporaryBook<<newPass<<"|"<<endl;
+                }
+                else
+                {
+                    temporaryBook<<someUser.identyficationNr<<"|";
+                    temporaryBook<<someUser.login<<"|";
+                    temporaryBook<<someUser.password<<"|"<<endl;
+                }
+                subsidiaryVector.clear();
+            }
+            else
+            {
+                boook.close();
+                remove("Users.txt");
+                temporaryBook.close();
+                rename("TemporaryUsers.txt", "Users.txt");
+                break;
+            }
+        }
+        cout<<"Halo zostalo zaktualizowane."<<endl;
+        Sleep(1500);
+    }
+    else
+    {
+        cout<<"Podano blednie stare haslo. Haslo nie uleglo zmianie."<<endl;
+        Sleep(1500);
+    }
+}
+
 void changingName(int personalID, int userID)
 {
     fstream boook, temporaryBook;
@@ -776,107 +848,118 @@ int main()
         {
             userId=logging(users);
             loadingAdressBook(adresaci, userId);
-            if(userId>0)
+            while(1)
             {
-                system("cls");
-                cout<<"1. Dodaj adresata."<<endl;
-                cout<<"2. Wyszukaj po imieniu."<<endl;
-                cout<<"3. Wyszukaj po nazwisku."<<endl;
-                cout<<"4. Wyswietl wsyzstkich adresatow."<<endl;
-                cout<<"5. Usun adresata."<<endl;
-                cout<<"6. Edytuj adresata."<<endl;
-                cout<<"9. Zakoncz program."<<endl;
-                cin>>wyborMenuGlownego;
+                if(userId>0)
+                {
+                    system("cls");
+                    cout<<"1. Dodaj adresata."<<endl;
+                    cout<<"2. Wyszukaj po imieniu."<<endl;
+                    cout<<"3. Wyszukaj po nazwisku."<<endl;
+                    cout<<"4. Wyswietl wsyzstkich adresatow."<<endl;
+                    cout<<"5. Usun adresata."<<endl;
+                    cout<<"6. Edytuj adresata."<<endl;
+                    cout<<"7. Zmien haslo."<<endl;
+                    cout<<"9. Wyloguj sie."<<endl;
+                    cin>>wyborMenuGlownego;
 
-                if (wyborMenuGlownego =='1')
-                {
-                    DodajNowyKontakt(adresaci,idPrzyjaciela, userId);
-                }
-                else if (wyborMenuGlownego == '2')
-                {
-                    SzukajImion(adresaci, userId);
-                }
-                else if (wyborMenuGlownego == '3')
-                {
-                    SzukajNazwisk(adresaci, userId);
-                }
-                else if (wyborMenuGlownego == '4')
-                {
-                    WyswietlWszystkie(adresaci, userId);
-                }
-                else if (wyborMenuGlownego == '5')
-                {
-                    system("cls");
-                    usuwanieAdresata(adresaci, userId);
-                }
-                else if (wyborMenuGlownego == '6')
-                {
-                    system("cls");
-                    cout<<"Wpisz ID."<<endl;
-                    cin>>editingID;
-                    system("cls");
-                    for (int i=0; i<adresaci.size(); i++)
+                    if (wyborMenuGlownego =='1')
                     {
-                        if(adresaci[i].id==editingID)
+                        DodajNowyKontakt(adresaci,idPrzyjaciela, userId);
+                    }
+                    else if (wyborMenuGlownego == '2')
+                    {
+                        SzukajImion(adresaci, userId);
+                    }
+                    else if (wyborMenuGlownego == '3')
+                    {
+                        SzukajNazwisk(adresaci, userId);
+                    }
+                    else if (wyborMenuGlownego == '4')
+                    {
+                        WyswietlWszystkie(adresaci, userId);
+                    }
+                    else if (wyborMenuGlownego == '5')
+                    {
+                        usuwanieAdresata(adresaci, userId);
+                    }
+                    else if (wyborMenuGlownego == '6')
+                    {
+                        system("cls");
+                        cout<<"Wpisz ID."<<endl;
+                        cin>>editingID;
+                        system("cls");
+                        for (int i=0; i<adresaci.size(); i++)
                         {
-                            numberOfcounts++;
-                            cout<<adresaci[i].id<<". ";
-                            cout<<adresaci[i].imie<<" "<<adresaci[i].nazwisko<<endl;
-                            cout<<"Tel. "<<adresaci[i].telefon<<endl<<"Adres e-mail: "<<adresaci[i].mail<<endl<<"Adres zamieszkania: "<<adresaci[i].adres<<endl<<endl;
+                            if(adresaci[i].id==editingID)
+                            {
+                                numberOfcounts++;
+                                cout<<adresaci[i].id<<". ";
+                                cout<<adresaci[i].imie<<" "<<adresaci[i].nazwisko<<endl;
+                                cout<<"Tel. "<<adresaci[i].telefon<<endl<<"Adres e-mail: "<<adresaci[i].mail<<endl<<"Adres zamieszkania: "<<adresaci[i].adres<<endl<<endl;
 
-                            cout<<"Co zmieniamy?"<<endl;
-                            cout<<"1 - imie"<<endl;
-                            cout<<"2 - nazwisko"<<endl;
-                            cout<<"3 - numer telefonu"<<endl;
-                            cout<<"4 - email"<<endl;
-                            cout<<"5 - adres"<<endl;
-                            cout<<"6 - powrot do menu"<<endl;
-                            cin>>wyborMenuSzukaj;
-                            switch (wyborMenuSzukaj)
-                            {
-                            case '1':
-                            {
-                                changingName(editingID, userId);
-                            }
-                            break;
-                            case '2':
-                            {
-                                changingSurname(editingID, userId);
-                            }
-                            break;
-                            case '3':
-                            {
-                                changingNumber(editingID, userId);
-                            }
-                            break;
-                            case '4':
-                            {
-                                changingEmail(editingID, userId);
-                            }
-                            break;
-                            case '5':
-                            {
-                                changingAdress(editingID, userId);
-                            }
-                            break;
-                            case '6':
+                                cout<<"Co zmieniamy?"<<endl;
+                                cout<<"1 - imie"<<endl;
+                                cout<<"2 - nazwisko"<<endl;
+                                cout<<"3 - numer telefonu"<<endl;
+                                cout<<"4 - email"<<endl;
+                                cout<<"5 - adres"<<endl;
+                                cout<<"6 - powrot do menu"<<endl;
+                                cin>>wyborMenuSzukaj;
+                                switch (wyborMenuSzukaj)
+                                {
+                                case '1':
+                                {
+                                    changingName(editingID, userId);
+                                }
                                 break;
+                                case '2':
+                                {
+                                    changingSurname(editingID, userId);
+                                }
+                                break;
+                                case '3':
+                                {
+                                    changingNumber(editingID, userId);
+                                }
+                                break;
+                                case '4':
+                                {
+                                    changingEmail(editingID, userId);
+                                }
+                                break;
+                                case '5':
+                                {
+                                    changingAdress(editingID, userId);
+                                }
+                                break;
+                                case '6':
+                                    break;
+                                }
                             }
                         }
+                        if (numberOfcounts==0)
+                        {
+                            cout<<"Ups. Cos poszlo nie tak. Czy jestes pewien, ze wprowadziles poprawne ID?"<<endl;
+                            cout<<"Wcisnij klawisz by wrocic do menu glownego.";
+                            getch();
+                        }
+                        numberOfcounts=0;
                     }
-                    if (numberOfcounts==0)
+                    else if (wyborMenuGlownego == '7')
                     {
-                        cout<<"Ups. Cos poszlo nie tak. Czy jestes pewien, ze wprowadziles poprawne ID?"<<endl;
-                        cout<<"Wcisnij klawisz by wrocic do menu glownego.";
-                        getch();
+                        changingPassword(users, userId);
+                        users.clear();
+                        loadingUsers(users);
                     }
-                    numberOfcounts=0;
+                    else if (wyborMenuGlownego == '9')
+                    {
+                        break;
+                    }
                 }
-                else if (wyborMenuGlownego == '9')
-                {
-                    exit(0);
-                }
+
             }
+
         }
         else if (firstMenuChoose == '2')
         {
