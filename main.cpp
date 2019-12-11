@@ -18,7 +18,7 @@ struct User
     string login, password;
 };
 
-void DodajNowyKontakt(vector <Adresat> &nowy, int id, int userIdd)
+void DodajNowyKontakt(vector <Adresat> &nowy, int userIdd)
 {
     fstream book;
     int idIterator;
@@ -43,7 +43,7 @@ void DodajNowyKontakt(vector <Adresat> &nowy, int id, int userIdd)
     }
     else
     {
-        idIterator=nowy[nowy.size()-1].id;
+        idIterator = nowy[nowy.size()-1].id;
     }
 
     person.id = idIterator+1;
@@ -240,7 +240,7 @@ void changingPassword(vector <User> &userss, int userId)
 
     cout<<"Wpisz stare haslo:"<<endl;
     cin>>oldPass;
-    cout<<"Wpisz stare haslo:"<<endl;
+    cout<<"Wprowadz nowe haslo:"<<endl;
     cin>>newPass;
 
 
@@ -829,7 +829,6 @@ int main()
 {
     vector <Adresat> adresaci(0);
     vector <User> users(0);
-    int idPrzyjaciela = 0;
     int userId = 0;
     char wyborMenuGlownego, firstMenuChoose;
     char wyborMenuSzukaj;
@@ -865,7 +864,7 @@ int main()
 
                     if (wyborMenuGlownego =='1')
                     {
-                        DodajNowyKontakt(adresaci,idPrzyjaciela, userId);
+                        DodajNowyKontakt(adresaci, userId);
                     }
                     else if (wyborMenuGlownego == '2')
                     {
@@ -882,6 +881,8 @@ int main()
                     else if (wyborMenuGlownego == '5')
                     {
                         usuwanieAdresata(adresaci, userId);
+                        adresaci.clear();
+                        loadingAdressBook(adresaci, userId);
                     }
                     else if (wyborMenuGlownego == '6')
                     {
